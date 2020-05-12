@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     image_index = 100
 
-    for i in range(20):
+    for i in range(500):
         image_handler = ImageHandler()
         if image_handler.is_legal():
             print("legal")
