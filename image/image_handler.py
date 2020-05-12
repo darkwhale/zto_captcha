@@ -136,18 +136,22 @@ class ImageHandler(object):
     def normal_region(image):
         width, height = image.shape
 
-        fill_dict = defaultdict(set)
+        pixel_list = []
         for i in range(width):
             for j in range(height):
                 if image[i, j] < 240:
-                    fill_dict[image[i, j]].add(Point(i, j))
+                    pixel_list.append(image[i, j])
 
-        maximum_value = max(fill_dict, key=lambda x: len(fill_dict.get(x)))
-        # maximum_set = fill_dict.get(maximum_value)
+        avg_pixel_value = np.mean(pixel_list)
 
-        maximum_set = reduce(set.union, [fill_dict.get(maximum_value + i) for i in range(-10, 10) if (maximum_value + i)
-                                         in fill_dict])
+        print(avg_pixel_value)
 
-        region = Region(maximum_set, maximum_value)
+        region_set = set()
+        for i in range(width):
+            for j in range(height):
+                if image[i, j] < avg_pixel_value:
+                    region_set.add(Point(i, j))
+
+        region = Region(region_set)
 
         return region.generate_image()
