@@ -6,8 +6,9 @@ from PIL import Image, ImageSequence
 import numpy as np
 import cv2
 from functools import reduce
+from io import BytesIO
 
-from config import zto_image_url, cache_dir
+from config import *
 from exception import RequestException
 
 if not os.path.exists(cache_dir):
@@ -28,16 +29,13 @@ def get_url():
 
 
 class ImageHandler(object):
-    def __init__(self,
-                 cache_file_name=None):
+    def __init__(self):
 
         self.status = None
 
         # noinspection PyBroadException
         try:
             self.image_content = get_url()
-
-            self.cache_file_name = "0" if cache_file_name is None else str(cache_file_name)
 
             self.origin_image_dict = self.image_content.text
 
@@ -73,23 +71,17 @@ class ImageHandler(object):
     def get_id(self):
         return self.id
 
-    def save_image(self):
-        with open(os.path.join(cache_dir, "{}.{}".format(self.cache_file_name, self.get_suffix())), "wb") as writer:
+    def save_image(self, image_path):
+        with open(image_path, "wb") as writer:
             writer.write(base64.b64decode(self.image_info))
 
-    def get_image_name(self):
-        return os.path.join(cache_dir, "{}.{}".format(self.cache_file_name, self.get_suffix()))
-
     def get_gray_static_image(self):
-        # 1.保存图像，2.读取图像，3.判断为png还是gif，4.处理返回
+        # 1.读取图像，2.判断为png还是gif，3.处理返回
         # 先保存图片
-        self.save_image()
 
-        file_path = self.get_image_name()
-
-        image = Image.open(file_path)
-
-        np_merge = None
+        image_base64 = base64.b64decode(self.image_info)
+        image_io = BytesIO(image_base64)
+        image = Image.open(image_io)
 
         # png直接返回灰度图像，gif读取帧然后合并图像
         if self.get_suffix() == "png":
@@ -105,4 +97,33 @@ class ImageHandler(object):
 
         return np_merge
 
+    def generate_uniform_image(self):
+        """获取标准化的图像块"""
+        image = self.get_gray_static_image()
+        image_list = []
 
+        image_part1 = image[region_vertical[0]: region_vertical[1], region_part1[0]: region_part1[1]]
+        image_part2 = image[region_vertical[0]: region_vertical[1], region_part2[0]: region_part2[1]]
+        image_part3 = image[region_vertical[0]: region_vertical[1], region_part3[0]: region_part3[1]]
+        image_part4 = image[region_vertical[0]: region_vertical[1], region_part4[0]: region_part4[1]]
+
+        image_list.append(self.fill_border(image_part1))
+        image_list.append(self.fill_border(image_part2))
+        image_list.append(self.fill_border(image_part3))
+        image_list.append(self.fill_border(image_part4))
+
+        return image_list
+
+    @staticmethod
+    def fill_border(image, length=36):
+        width, height = image.shape
+
+        remain_height, remain_width = length - height, length - width
+
+        top_fill = remain_height // 2
+        bottom_fill = (remain_height + 1) // 2
+        left_fill = remain_width // 2
+        right_fill = (remain_width + 1) // 2
+
+        return cv2.copyMakeBorder(image, left_fill, right_fill, top_fill, bottom_fill,
+                                  cv2.BORDER_CONSTANT, value=[255, 255, 255])
