@@ -7,9 +7,11 @@ import numpy as np
 import cv2
 from functools import reduce
 from io import BytesIO
+from collections import defaultdict
 
 from config import *
 from exception import RequestException
+from region import Region, Point
 
 if not os.path.exists(cache_dir):
     os.mkdir(cache_dir)
@@ -41,7 +43,7 @@ class ImageHandler(object):
 
             base_dict = json.loads(self.origin_image_dict)
             self.image_base64_str = base_dict.get("result").get("image")
-            self.id = base_dict.get("id")
+            self.id = base_dict.get("result").get("id")
 
             base64_index = self.image_base64_str.find("base64")
             self.fore_info, self.image_info = self.image_base64_str[: base64_index], \
@@ -100,7 +102,7 @@ class ImageHandler(object):
     def generate_uniform_image(self):
         """获取标准化的图像块"""
         image = self.get_gray_static_image()
-        _, image = cv2.threshold(image, 160, 255, cv2.THRESH_BINARY_INV)
+        # _, image = cv2.threshold(image, 180, 255, cv2.THRESH_BINARY)
         # image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 7, 5)
         image_list = []
 
@@ -109,23 +111,43 @@ class ImageHandler(object):
         image_part3 = image[region_vertical[0]: region_vertical[1], region_part3[0]: region_part3[1]]
         image_part4 = image[region_vertical[0]: region_vertical[1], region_part4[0]: region_part4[1]]
 
-        image_list.append(self.fill_border(image_part1))
-        image_list.append(self.fill_border(image_part2))
-        image_list.append(self.fill_border(image_part3))
-        image_list.append(self.fill_border(image_part4))
+        image_list.append(self.normal_region(image_part1))
+        image_list.append(self.normal_region(image_part2))
+        image_list.append(self.normal_region(image_part3))
+        image_list.append(self.normal_region(image_part4))
 
         return image_list
 
+    # @staticmethod
+    # def fill_border(image, length=36):
+    #     width, height = image.shape
+    #
+    #     remain_height, remain_width = length - height, length - width
+    #
+    #     top_fill = remain_height // 2
+    #     bottom_fill = (remain_height + 1) // 2
+    #     left_fill = remain_width // 2
+    #     right_fill = (remain_width + 1) // 2
+    #
+    #     return cv2.copyMakeBorder(image, left_fill, right_fill, top_fill, bottom_fill,
+    #                               cv2.BORDER_CONSTANT, value=[0, 0, 0])
+
     @staticmethod
-    def fill_border(image, length=36):
+    def normal_region(image):
         width, height = image.shape
 
-        remain_height, remain_width = length - height, length - width
+        fill_dict = defaultdict(set)
+        for i in range(width):
+            for j in range(height):
+                if image[i, j] < 240:
+                    fill_dict[image[i, j]].add(Point(i, j))
 
-        top_fill = remain_height // 2
-        bottom_fill = (remain_height + 1) // 2
-        left_fill = remain_width // 2
-        right_fill = (remain_width + 1) // 2
+        maximum_value = max(fill_dict, key=lambda x: len(fill_dict.get(x)))
+        # maximum_set = fill_dict.get(maximum_value)
 
-        return cv2.copyMakeBorder(image, left_fill, right_fill, top_fill, bottom_fill,
-                                  cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        maximum_set = reduce(set.union, [fill_dict.get(maximum_value + i) for i in range(-10, 10) if (maximum_value + i)
+                                         in fill_dict])
+
+        region = Region(maximum_set, maximum_value)
+
+        return region.generate_image()

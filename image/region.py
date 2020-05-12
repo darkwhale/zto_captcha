@@ -2,14 +2,12 @@ import collections
 import numpy as np
 import cv2
 
-from config import same_region_distance
-
 Point = collections.namedtuple("Point", ["x", "y"])
 
 
 class Region(object):
-    def __init__(self, value):
-        self.point_set = set()
+    def __init__(self, sub_set=None, value=None):
+        self.point_set = sub_set
         self.value = value
 
     def add(self, point):
@@ -54,7 +52,6 @@ class Region(object):
         left, right, top, bottom = self.get_border()
         width, height = right - left, bottom - top
 
-        print(left, right, top, bottom)
         remain_height, remain_width = length - height, length - width
 
         top_fill = remain_height // 2
@@ -62,7 +59,7 @@ class Region(object):
         left_fill = remain_width // 2
         right_fill = (remain_width + 1) // 2
 
-        return cv2.copyMakeBorder(image_piece, top_fill, bottom_fill, left_fill, right_fill,
+        return cv2.copyMakeBorder(image_piece, left_fill, right_fill, top_fill, bottom_fill,
                                   cv2.BORDER_CONSTANT, value=[0, 0, 0])
 
     def __repr__(self):
