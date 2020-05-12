@@ -102,7 +102,7 @@ class ImageHandler(object):
     def generate_uniform_image(self):
         """获取标准化的图像块"""
         image = self.get_gray_static_image()
-        # _, image = cv2.threshold(image, 180, 255, cv2.THRESH_BINARY)
+        # _, image = cv2.threshold(image, 170, 255, cv2.THRESH_BINARY)
         # image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 7, 5)
         image_list = []
 
@@ -143,10 +143,11 @@ class ImageHandler(object):
                     fill_dict[image[i, j]].add(Point(i, j))
 
         maximum_value = max(fill_dict, key=lambda x: len(fill_dict.get(x)))
-        # maximum_set = fill_dict.get(maximum_value)
+        maximum_set = fill_dict.get(maximum_value)
 
-        maximum_set = reduce(set.union, [fill_dict.get(maximum_value + i) for i in range(-10, 10) if (maximum_value + i)
-                                         in fill_dict])
+        # maximum_set = reduce(set.union, [fill_dict.get(maximum_value + i) for i in range(-10, 10) if
+        #                                  (maximum_value + i)
+        #                                  in fill_dict])
 
         region = Region(maximum_set, maximum_value)
 
