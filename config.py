@@ -10,3 +10,6 @@ region_part3 = (63, 96)
 region_part4 = (100, 130)
 
 region_vertical = (12, 48)
+
+
+feature_str = "23456789abcdefghijkmnpqrstuvwxyz"

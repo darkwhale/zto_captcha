@@ -100,6 +100,8 @@ class ImageHandler(object):
     def generate_uniform_image(self):
         """获取标准化的图像块"""
         image = self.get_gray_static_image()
+        _, image = cv2.threshold(image, 160, 255, cv2.THRESH_BINARY_INV)
+        # image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 7, 5)
         image_list = []
 
         image_part1 = image[region_vertical[0]: region_vertical[1], region_part1[0]: region_part1[1]]
@@ -126,4 +128,4 @@ class ImageHandler(object):
         right_fill = (remain_width + 1) // 2
 
         return cv2.copyMakeBorder(image, left_fill, right_fill, top_fill, bottom_fill,
-                                  cv2.BORDER_CONSTANT, value=[255, 255, 255])
+                                  cv2.BORDER_CONSTANT, value=[0, 0, 0])
