@@ -1,4 +1,5 @@
 import os
+import shutil
 
 
 if __name__ == '__main__':
@@ -13,4 +14,4 @@ if __name__ == '__main__':
     file_list.sort()
 
     for char, file_name in zip(all_info, file_list):
-        os.rename(os.path.join("cache", file_name), os.path.join("cache", char, file_name))
+        shutil.copy(os.path.join("cache", file_name), os.path.join("cache", char, file_name))
