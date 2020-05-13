@@ -19,3 +19,7 @@ region_png_vertical = (9, 45)
 
 
 feature_str = "23456789abcdefghijkmnpqrstuvwxyz"
+
+
+standard_avg = 128
+standard_std = 50

@@ -4,7 +4,7 @@ import string
 
 if __name__ == '__main__':
     
-    dirs = "gif"
+    dirs = "new_cache"
 
     for i in range(10):
         if not os.path.exists(os.path.join(dirs, str(i))):

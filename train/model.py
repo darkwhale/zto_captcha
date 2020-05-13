@@ -3,11 +3,12 @@ from keras.layers import Dense, Activation, Flatten, BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D
 import os
 import numpy as np
-from keras.optimizers import  Adam
+from keras.optimizers import Adam, SGD
 from keras.utils import np_utils
 from sklearn.model_selection import train_test_split
 import cv2
-from config import *
+
+feature_str = "23456789abcdefghijkmnpqrstuvwxyz"
 
 
 def build_model(weight_path=None):
@@ -51,13 +52,13 @@ def lr_rate(epoch):
         lr (float32): learning rate
     """
     lr = 1e-2
-    if epoch > 18:
+    if epoch > 16:
         lr *= 0.5e-3
-    elif epoch > 15:
+    elif epoch > 13:
         lr *= 1e-3
-    elif epoch > 10:
+    elif epoch > 7:
         lr *= 1e-2
-    elif epoch > 5:
+    elif epoch > 4:
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
@@ -105,9 +106,9 @@ if __name__ == '__main__':
 
     cnn_model.summary()
 
-    cnn_model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=1, batch_size=64, epochs=30)
+    cnn_model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=1, batch_size=64, epochs=20)
 
-    scores = cnn_model.evaluate(x_valid, y_valid, verbose=1)
+    # scores = cnn_model.evaluate(x_valid, y_valid, verbose=1)
 
     cnn_model.save_weights("model.h5")
 
