@@ -12,6 +12,7 @@ from collections import defaultdict
 from config import *
 from exception import RequestException
 from region import Region, Point
+from predict import predict
 
 if not os.path.exists(cache_dir):
     os.mkdir(cache_dir)
@@ -88,7 +89,7 @@ class ImageHandler(object):
         # png直接返回灰度图像，gif读取帧然后合并图像
         if self.get_suffix() == "png":
             np_list = np.asarray(image)
-            np_merge = cv2.cvtColor(np_list, cv2.COLOR_BGR2GRAY)
+            np_merge = 255 - cv2.cvtColor(np_list, cv2.COLOR_BGR2GRAY)
 
         else:
             np_list = list()
@@ -102,35 +103,45 @@ class ImageHandler(object):
     def generate_uniform_image(self):
         """获取标准化的图像块"""
         image = self.get_gray_static_image()
-        # _, image = cv2.threshold(image, 170, 255, cv2.THRESH_BINARY)
+        # _, image = cv2.threshold(image, 170, 255, cv2.THRESH_BINARY_INV)
         # image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 7, 5)
-        image_list = []
 
-        image_part1 = image[region_vertical[0]: region_vertical[1], region_part1[0]: region_part1[1]]
-        image_part2 = image[region_vertical[0]: region_vertical[1], region_part2[0]: region_part2[1]]
-        image_part3 = image[region_vertical[0]: region_vertical[1], region_part3[0]: region_part3[1]]
-        image_part4 = image[region_vertical[0]: region_vertical[1], region_part4[0]: region_part4[1]]
+        sub_region_vertical = region_vertical if self.get_suffix() == "gif" else region_png_vertical
+        sub_region_part1 = region_part1 if self.get_suffix() == "gif" else region_png_part1
+        sub_region_part2 = region_part2 if self.get_suffix() == "gif" else region_png_part2
+        sub_region_part3 = region_part3 if self.get_suffix() == "gif" else region_png_part3
+        sub_region_part4 = region_part4 if self.get_suffix() == "gif" else region_png_part4
 
-        image_list.append(self.normal_region(image_part1))
-        image_list.append(self.normal_region(image_part2))
-        image_list.append(self.normal_region(image_part3))
-        image_list.append(self.normal_region(image_part4))
+        image_part1 = image[sub_region_vertical[0]: sub_region_vertical[1], sub_region_part1[0]: sub_region_part1[1]]
+        image_part2 = image[sub_region_vertical[0]: sub_region_vertical[1], sub_region_part2[0]: sub_region_part2[1]]
+        image_part3 = image[sub_region_vertical[0]: sub_region_vertical[1], sub_region_part3[0]: sub_region_part3[1]]
+        image_part4 = image[sub_region_vertical[0]: sub_region_vertical[1], sub_region_part4[0]: sub_region_part4[1]]
+
+        image_part_list = [image_part1, image_part2, image_part3, image_part4]
+
+        if self.get_suffix() == "png":
+            image_list = [self.fill_border(image_part) for image_part in image_part_list]
+        else:
+            image_list = [self.normal_region(image_part) for image_part in image_part_list]
 
         return image_list
 
-    # @staticmethod
-    # def fill_border(image, length=36):
-    #     width, height = image.shape
-    #
-    #     remain_height, remain_width = length - height, length - width
-    #
-    #     top_fill = remain_height // 2
-    #     bottom_fill = (remain_height + 1) // 2
-    #     left_fill = remain_width // 2
-    #     right_fill = (remain_width + 1) // 2
-    #
-    #     return cv2.copyMakeBorder(image, left_fill, right_fill, top_fill, bottom_fill,
-    #                               cv2.BORDER_CONSTANT, value=[0, 0, 0])
+    def get_predict(self):
+        return predict(self.generate_uniform_image())
+
+    @staticmethod
+    def fill_border(image, length=36):
+        width, height = image.shape
+
+        remain_height, remain_width = length - height, length - width
+
+        top_fill = remain_height // 2
+        bottom_fill = (remain_height + 1) // 2
+        left_fill = remain_width // 2
+        right_fill = (remain_width + 1) // 2
+
+        return cv2.copyMakeBorder(image, left_fill, right_fill, top_fill, bottom_fill,
+                                  cv2.BORDER_CONSTANT, value=[0, 0, 0])
 
     @staticmethod
     def normal_region(image):

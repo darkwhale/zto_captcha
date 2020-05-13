@@ -11,5 +11,11 @@ region_part4 = (100, 130)
 
 region_vertical = (12, 48)
 
+region_png_part1 = (3, 36)
+region_png_part2 = (32, 62)
+region_png_part3 = (62, 95)
+region_png_part4 = (95, 125)
+region_png_vertical = (9, 45)
+
 
 feature_str = "23456789abcdefghijkmnpqrstuvwxyz"

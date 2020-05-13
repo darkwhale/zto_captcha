@@ -3,14 +3,14 @@ from keras.layers import Dense, Activation, Flatten, BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D
 import os
 import numpy as np
-from keras.optimizers import SGD
+from keras.optimizers import  Adam
 from keras.utils import np_utils
 from sklearn.model_selection import train_test_split
 import cv2
 from config import *
 
 
-def build_model():
+def build_model(weight_path=None):
     model = Sequential()
     model.add(Conv2D(16, (3, 3), padding='same', input_shape=(36, 36, 1)))
     model.add(BatchNormalization())
@@ -22,10 +22,18 @@ def build_model():
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
+    model.add(Conv2D(64, (3, 3)))
+    model.add(BatchNormalization())
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+
     model.add(Flatten())
 
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(256, activation='relu'))
     model.add(Dense(32, activation='softmax'))
+
+    if weight_path is not None:
+        model.load_weights(weight_path)
 
     return model
 
@@ -88,16 +96,16 @@ if __name__ == '__main__':
         train_y.append(label)
 
     train_x, train_y = np.array(train_x), np.array(train_y)
-    x_train, x_valid, y_train, y_valid = train_test_split(train_x, train_y, test_size=0.3)
+    x_train, x_valid, y_train, y_valid = train_test_split(train_x, train_y, test_size=0.2)
 
     cnn_model = build_model()
     cnn_model.compile(loss='categorical_crossentropy',
-                      optimizer=SGD(lr=lr_rate(0)),
+                      optimizer=Adam(lr=lr_rate(0)),
                       metrics=['accuracy'])
 
     cnn_model.summary()
 
-    cnn_model.fit(x_train, y_train, validation_data=(x_valid, y_valid), batch_size=64, epochs=30)
+    cnn_model.fit(x_train, y_train, validation_data=(x_valid, y_valid), verbose=1, batch_size=64, epochs=30)
 
     scores = cnn_model.evaluate(x_valid, y_valid, verbose=1)
 
